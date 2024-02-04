@@ -1,4 +1,4 @@
-package store
+package todo_store
 
 import "github.com/senomas/gosvc_store/store"
 

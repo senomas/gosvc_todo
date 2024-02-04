@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	svc_store "github.com/senomas/gosvc_store/store"
+	"github.com/senomas/gosvc_store/store"
 	"github.com/senomas/gosvc_store/store/sql_tmpl/sqlite"
-	"github.com/senomas/gosvc_todo/store"
-	"github.com/senomas/gosvc_todo/store/sql_tmpl"
+	"github.com/senomas/gosvc_todo/todo_store"
+	"github.com/senomas/gosvc_todo/todo_store/sql_tmpl"
 )
 
 type TodoStoreTemplateImpl struct{}
@@ -17,12 +17,12 @@ func init() {
 }
 
 // InsertTodo implements sql_tmpl.TodoStoreTemplate.
-func (s *TodoStoreTemplateImpl) InsertTodo(t *store.Todo) (string, []any) {
+func (s *TodoStoreTemplateImpl) InsertTodo(t *todo_store.Todo) (string, []any) {
 	return `INSERT INTO todo (title, completed) VALUES ($1, $2)`, []any{t.Title, t.Completed}
 }
 
 // UpdateTodo implements sql_tmpl.TodoStoreTemplate.
-func (s *TodoStoreTemplateImpl) UpdateTodo(t *store.Todo) (string, []any) {
+func (s *TodoStoreTemplateImpl) UpdateTodo(t *todo_store.Todo) (string, []any) {
 	return `UPDATE todo SET title = $1, completed = $2 WHERE id = $3`, []any{t.Title, t.Completed, t.ID}
 }
 
@@ -36,7 +36,7 @@ func (s *TodoStoreTemplateImpl) GetTodoByID(id any) (string, []any) {
 	return `SELECT id, title, completed FROM todo WHERE id = $1`, []any{id}
 }
 
-func (s *TodoStoreTemplateImpl) findTodoWhere(filter store.TodoFilter) ([]string, []any) {
+func (s *TodoStoreTemplateImpl) findTodoWhere(filter todo_store.TodoFilter) ([]string, []any) {
 	where := []string{}
 	args := []any{}
 
@@ -48,7 +48,7 @@ func (s *TodoStoreTemplateImpl) findTodoWhere(filter store.TodoFilter) ([]string
 }
 
 // FindTodo implements sql_tmpl.TodoStoreTemplate.
-func (s *TodoStoreTemplateImpl) FindTodo(filter store.TodoFilter, skip int64, limit int) (string, []any) {
+func (s *TodoStoreTemplateImpl) FindTodo(filter todo_store.TodoFilter, skip int64, limit int) (string, []any) {
 	where, args := s.findTodoWhere(filter)
 	sl := ""
 	if limit > 0 {
@@ -66,7 +66,7 @@ func (s *TodoStoreTemplateImpl) FindTodo(filter store.TodoFilter, skip int64, li
 }
 
 // FindTodoTotal implements sql_tmpl.TodoStoreTemplate.
-func (s *TodoStoreTemplateImpl) FindTodoTotal(filter store.TodoFilter) (string, []any) {
+func (s *TodoStoreTemplateImpl) FindTodoTotal(filter todo_store.TodoFilter) (string, []any) {
 	where, args := s.findTodoWhere(filter)
 	if len(where) > 0 {
 		return `SELECT COUNT(*) FROM todo WHERE ` + strings.Join(where, " AND "), args
@@ -77,7 +77,7 @@ func (s *TodoStoreTemplateImpl) FindTodoTotal(filter store.TodoFilter) (string, 
 // ErrorMapFind implements sql_tmpl.TodoStoreTemplate.
 func (*TodoStoreTemplateImpl) ErrorMapFind(err error) error {
 	if err.Error() == "sql: no rows in result set" {
-		return svc_store.ErrNoData
+		return store.ErrNoData
 	}
 	return err
 }
